@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace OperatingSystemsProject2019;
+namespace Ext4FileSystemSimulation;
 
 public class Terminal
 {

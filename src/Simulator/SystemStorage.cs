@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using Ext4FileSystemSimulation.Nodes;
 
-namespace OperatingSystemsProject2019;
+namespace Ext4FileSystemSimulation;
 
 public class SystemStorage
 {
@@ -266,10 +267,10 @@ public class SystemStorage
         disk.Position = 0;
     }
 
-    public IDirNode GetDirStats(int address = 0)
+    public DirectoryNode GetDirStats(int address = 0)
     {
         //reads ROOT stats if nothing is sent as an argument
-        IDirNode node = new IDirNode();
+        DirectoryNode node = new DirectoryNode();
         if (address == 0)
         {
             disk.Position = tracker.DirNodesStartAddress;
@@ -349,7 +350,7 @@ public class SystemStorage
             }
         }
 
-        IDirNode tmp = GetDirStats();
+        DirectoryNode tmp = GetDirStats();
 
         if (dircount == '+' && newIDirNodeAddress != 0) //adding dir node pointer
         {
@@ -421,7 +422,7 @@ public class SystemStorage
 
     private void ListRootSubDirectories()
     {
-        IDirNode root = GetDirStats();
+        DirectoryNode root = GetDirStats();
         disk.Position = 0;
 
         for (int i = 0; i < root.DirCount; i++)
@@ -435,7 +436,7 @@ public class SystemStorage
 
     private void ListRootFiles()
     {
-        IDirNode root = GetDirStats();
+        DirectoryNode root = GetDirStats();
         disk.Position = 0;
 
         for (int i = 0; i < root.FileCount; i++)
@@ -491,7 +492,7 @@ public class SystemStorage
         }
         else if (!name.Equals("ROOT"))
         {
-            IDirNode root = GetDirStats();
+            DirectoryNode root = GetDirStats();
             for (int i = 0; i < root.DirCount; i++)
             {
                 int checkPoint = root.iSubDirArray[i] + (int)MemoryTracker.INodeDirOffset.Name;
@@ -537,7 +538,7 @@ public class SystemStorage
 
     public void ListDirFiles(string dirName)
     {
-        IDirNode node = GetDirStats(LookForDirectory(dirName));
+        DirectoryNode node = GetDirStats(LookForDirectory(dirName));
         disk.Position = 0;
 
         for (int i = 0; i < node.FileCount; i++)
@@ -690,7 +691,7 @@ public class SystemStorage
         }
         else
         {
-            IDirNode node = GetDirStats(dirAddress);
+            DirectoryNode node = GetDirStats(dirAddress);
 
             if (node.FileCount < 1 && flag == 0)
             {
@@ -725,11 +726,11 @@ public class SystemStorage
     {
         if (requestedFileSize <= tracker.MaxFileSize)
         {
-            int[,] resultMatrix = new int[2, IFileNode.MaxBlockCount];
+            int[,] resultMatrix = new int[2, FileNode.MaxBlockCount];
             int byteCount, blockAddress, matIndex = 0;
             disk.Position = tracker.FileDataStartAddress;
 
-            while (requestedFileSize > 0 && disk.Position < disk.Length && matIndex <= IFileNode.MaxBlockCount)
+            while (requestedFileSize > 0 && disk.Position < disk.Length && matIndex <= FileNode.MaxBlockCount)
             {
                 if (reader.ReadByte() == 0 && ValidateMinBlockSize((int)disk.Position - 1))
                 {
@@ -837,7 +838,7 @@ public class SystemStorage
 
         int blockCount = 0;
 
-        for (int i = 0; i < IFileNode.MaxBlockCount && matrix[0, i] != 0; i++, blockCount++)
+        for (int i = 0; i < FileNode.MaxBlockCount && matrix[0, i] != 0; i++, blockCount++)
         {
             ;
         }
@@ -1195,7 +1196,7 @@ public class SystemStorage
         }
         else
         {
-            IDirNode node = GetDirStats(dirAddress);
+            DirectoryNode node = GetDirStats(dirAddress);
 
             if (node.FileCount > 0)
             {
@@ -1280,7 +1281,7 @@ public class SystemStorage
         }
         else
         {
-            IDirNode node = GetDirStats(dirAddress);
+            DirectoryNode node = GetDirStats(dirAddress);
 
             if (node.FileCount == 0)
             {
@@ -1306,7 +1307,7 @@ public class SystemStorage
 
     public void FlushRootDirectory()
     {
-        IDirNode node = GetDirStats();
+        DirectoryNode node = GetDirStats();
 
         if (node.FileCount == 0 && node.DirCount == 0)
         {

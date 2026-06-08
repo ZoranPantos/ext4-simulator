@@ -1,6 +1,6 @@
-﻿namespace OperatingSystemsProject2019;
+namespace Ext4FileSystemSimulation.Nodes;
 
-public class IFileNode
+public class FileNode
 {
     private readonly FileMetadata _metadata;
 
@@ -12,33 +12,12 @@ public class IFileNode
     public static int MaxBlockCount => 10;
     public int FileSize { get; set; }
 
-    public IFileNode()
+    public FileNode()
     {
         _metadata = new FileMetadata();
         _metadata.Name = _metadata.Owner = _metadata.CreationTime = CurrentDir = null;
         CurrentBlockCount = FileSize = 0;
         ptrMatrix = new int[MaxBlockCount, MaxBlockCount];
-    }
-}
-
-public class IDirNode
-{
-    public int[] iFileArray;
-    public int[] iSubDirArray;
-
-    public int OrdinalNumber { get; set; }
-    public int IDNumber { get; set; }
-    public int FileCount { get; set; }
-    public int DirCount { get; set; }
-    public string Name { get; set; }
-    public string Parent { get; set; }
-
-    public IDirNode()
-    {
-        OrdinalNumber = IDNumber = FileCount = DirCount = 0;
-        Name = Parent = null;
-        iFileArray = new int[16];
-        iSubDirArray = new int[8];
     }
 }
 
