@@ -5,53 +5,79 @@ namespace Ext4FileSystemSimulation;
 
 public class Terminal
 {
-    private readonly SystemStorage disk;
-    private readonly LinkedList<string> availableCommands, createdSubDirectories;
+    private readonly SystemStorage _systemStorage;
+
+    private readonly LinkedList<string> _availableCommands = new(
+    [
+        "mkdir", "create", "put", "get", "ls", "cp", "mv", "rename", "echo",
+        "cat", "rm", "rm-r", "stat", "dstat", "help", "clear", "exit"
+    ]);
+
+    private readonly LinkedList<string> _createdSubDirectories = [];
     private string userInput;
 
-    public Terminal(SystemStorage disk)
-    {
-        this.disk = disk;
-        availableCommands = new LinkedList<string>();
-        createdSubDirectories = new LinkedList<string>();
-        availableCommands.AddLast("mkdir");
-        availableCommands.AddLast("create");
-        availableCommands.AddLast("put");
-        availableCommands.AddLast("get");
-        availableCommands.AddLast("ls");
-        availableCommands.AddLast("cp");
-        availableCommands.AddLast("mv");
-        availableCommands.AddLast("rename");
-        availableCommands.AddLast("echo");
-        availableCommands.AddLast("cat");
-        availableCommands.AddLast("rm");
-        availableCommands.AddLast("rm-r");
-        availableCommands.AddLast("stat");
-        availableCommands.AddLast("dstat");
-        availableCommands.AddLast("help");
-        availableCommands.AddLast("clear");
-        availableCommands.AddLast("exit");
-    }
+    public Terminal(SystemStorage systemStorage) =>
+        _systemStorage = systemStorage ?? throw new ArgumentNullException(nameof(systemStorage));
 
     private void Help()
     {
-        Console.WriteLine("\nAVAILABLE COMMANDS:");
-        Console.WriteLine("mkdir [path]: creates new directory on specified path");
-        Console.WriteLine("create [path]: creates new file on specified path");
-        Console.WriteLine("put [path/.../file_name]: uploads file from host file system to guest file system");
-        Console.WriteLine("get [path/.../file_name]: downloads file on specified path from guest file system to host file system");
-        Console.WriteLine("ls [path]: prints directory content on specified path");
-        Console.WriteLine("cp [path/.../file_name] [path/.../dir_name]: creates copy of file on specified path");
-        Console.WriteLine("mv [path/.../file_name] [path/dir_name]: moves file from specified path to specified directory");
-        Console.WriteLine("rename [path] [new_name]: renames item on specified path");
-        Console.WriteLine("echo [path/.../file_name] [user_input]: writes user input to specified file in path");
-        Console.WriteLine("cat [path/.../file_name]: prints file data from path");
-        Console.WriteLine("rm(-r) [file/dir_name]: deletes file or directory content with option to flush whole directory");
-        Console.WriteLine("stat [path/.../file_name]: prints file attributes and corresponding i-node information");
-        Console.WriteLine("dstat: prints current disk stats");
-        Console.WriteLine("help: prints all available commands with corresponding explanations");
-        Console.WriteLine("clear: clears text from the console window");
-        Console.WriteLine("exit: quits application\n");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine(
+            """
+
+            AVAILABLE COMMANDS
+            (paths begin at ROOT and use '/', e.g. ROOT/file or ROOT/dir/file)
+
+              mkdir ROOT/<dir>            create a directory (max 8, name<=15)
+              create ROOT/<file>          create an empty file (also in a dir)
+              echo ROOT/<file> <text>     write <text> into a file (no spaces)
+              cat ROOT/<file>             print a file's contents
+              ls ROOT/                    list ROOT (a dir: ls ROOT/<dir>)
+              stat ROOT/<file>            show file attributes + i-node info
+              rename ROOT/<item> <name>   rename a file or directory
+              cp ROOT/<file> <dir>        copy a file into a directory
+              mv ROOT/<file> <dir>        move a file into a directory
+              rm ROOT/<file>              delete a file or a directory
+              rm-r ROOT/                  empty ROOT or a directory
+              put <host_file>             upload a host file into ROOT
+              get ROOT/<file>             download a file to host folder
+              dstat                       print disk statistics
+              help                        show this help
+              clear                       clear the screen
+              exit                        quit the application
+
+            Notes:
+              - only one directory level (ROOT/dir); ROOT always exists
+              - <text>/<name> take a single token (no spaces, no '/')
+              - cp/mv into ROOT: write the destination as 'ROOT/'
+              - get will not overwrite a file that already exists on the host
+
+            """);
+
+        Console.ForegroundColor = ConsoleColor.DarkCyan;
+        Console.WriteLine(
+            """
+            EXAMPLES (run them top to bottom):
+
+              mkdir ROOT/docs               create directory 'docs'
+              create ROOT/notes.txt         create file 'notes.txt'
+              echo ROOT/notes.txt hello     write 'hello' into notes.txt
+              cat ROOT/notes.txt            prints: hello
+              create ROOT/docs/todo.txt     create 'todo.txt' in 'docs'
+              echo ROOT/docs/todo.txt task  write 'task' into todo.txt
+              ls ROOT/                      list ROOT
+              ls ROOT/docs                  list files in 'docs'
+              cp ROOT/notes.txt ROOT/docs   copy notes.txt into 'docs'
+              mv ROOT/docs/todo.txt ROOT/   move todo.txt to ROOT
+              rename ROOT/notes.txt n.txt   rename to n.txt
+              stat ROOT/n.txt               show n.txt attributes
+              rm ROOT/n.txt                 delete file n.txt
+              rm ROOT/docs                  delete 'docs' + contents
+              dstat                         show disk usage
+
+            """);
+
+        Console.ForegroundColor = ConsoleColor.White;
     }
 
     public void Start()
@@ -77,18 +103,12 @@ public class Terminal
     {
         Console.ForegroundColor = ConsoleColor.Red;
 
-        if (arg1 == null && arg2 == null)
-        {
+        if (arg1 is null && arg2 is null)
             Console.WriteLine(message);
-        }
-        else if (arg1 != null && arg2 == null)
-        {
+        else if (arg1 is not null && arg2 is null)
             Console.WriteLine(message, arg1);
-        }
         else
-        {
             Console.WriteLine(message, arg1, arg2);
-        }
 
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine();
@@ -116,29 +136,9 @@ public class Terminal
         MultipleString = 4
     }
 
-    private bool IsCommandValid(string command)
-    {
-        if (availableCommands.Contains(command))
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
+    private bool IsCommandValid(string command) => _availableCommands.Contains(command);
 
-    private bool IsStringInPathFormat(string input)
-    {
-        if (!input.Contains("/"))
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
+    private bool IsStringInPathFormat(string input) => input.Contains('/');
 
     private int PathDepthLevel(string path)
     {
@@ -146,10 +146,8 @@ public class Terminal
 
         for (int i = 0; i < path.Length; i++)
         {
-            if (path[i] == '/')
-            {
+            if (path[i].Equals('/'))
                 depth++;
-            }
         }
 
         return depth;
@@ -157,38 +155,27 @@ public class Terminal
 
     private bool InspectPath(string path, string command, string depthSupport)
     {
-        int depth;
-
-        if (depthSupport.Equals("1"))
+        int depth = depthSupport switch
         {
-            depth = 1;
-        }
-        else if (depthSupport.Equals("2"))
-        {
-            depth = 2;
-        }
-        else if (depthSupport.Equals("3"))
-        {
-            depth = 3;
-        }
-        else
-        {
-            depth = -1;
-        }
+            "1" => 1,
+            "2" => 2,
+            "3" => 3,
+            _ => -1
+        };
 
         if (!IsStringInPathFormat(path))
         {
-            Terminal.ErrorMessage("{0} is not in path format", path);
+            ErrorMessage("{0} is not in path format", path);
             return false;
         }
         else if (PathDepthLevel(path) > depth)
         {
-            Terminal.ErrorMessage("'{0}' supports up to level {1} depth path", command, depthSupport);
+            ErrorMessage("'{0}' supports up to level {1} depth path", command, depthSupport);
             return false;
         }
         else if (!path.Contains("ROOT"))
         {
-            Terminal.ErrorMessage("Incorrect path");
+            ErrorMessage("Incorrect path");
             PrintPathExample();
             return false;
         }
@@ -202,52 +189,38 @@ public class Terminal
     {
         string trimmedInput = input.Trim();
 
-        if (!trimmedInput.Contains(" "))
-        {
+        if (!trimmedInput.Contains(' '))
             return InputScenario.SingleString;
-        }
-        else
+        
+        int whiteSpaceCount = 0;
+
+        for (int i = 0; i < trimmedInput.Length; i++)
         {
-            int whiteSpaceCount = 0;
-
-            for (int i = 0; i < trimmedInput.Length; i++)
-            {
-                if (Char.IsWhiteSpace(trimmedInput[i]))
-                {
-                    whiteSpaceCount++;
-                }
-            }
-
-            if (whiteSpaceCount == 1)
-            {
-                return InputScenario.DoubleString;
-            }
-            else if (whiteSpaceCount == 2)
-            {
-                return InputScenario.TripleString;
-            }
+            if (char.IsWhiteSpace(trimmedInput[i]))
+                whiteSpaceCount++;
         }
-        return InputScenario.MultipleString;
+
+        return whiteSpaceCount switch
+        {
+            1 => InputScenario.DoubleString,
+            2 => InputScenario.TripleString,
+            _ => InputScenario.MultipleString
+        };
     }
 
     public bool Operate(string input) //already trimmed
     {
-        if (DetermineInputScenario(input) == InputScenario.SingleString)
+        switch (DetermineInputScenario(input))
         {
-            return OperateSingleString(input);
-        }
-        else if (DetermineInputScenario(input) == InputScenario.DoubleString)
-        {
-            return OperateDoubleString(input);
-        }
-        else if (DetermineInputScenario(input) == InputScenario.TripleString)
-        {
-            return OperateTripleString(input);
-        }
-        else
-        {
-            ErrorMessage("Invalid input");
-            return false;
+            case InputScenario.SingleString:
+                return OperateSingleString(input);
+            case InputScenario.DoubleString:
+                return OperateDoubleString(input);
+            case InputScenario.TripleString:
+                return OperateTripleString(input);
+            default:
+                ErrorMessage("Invalid input");
+                return false;
         }
     }
 
@@ -255,36 +228,32 @@ public class Terminal
     {
         if (!IsCommandValid(input))
         {
-            Terminal.ErrorMessage("'{0}' command was not recognised", input);
+            ErrorMessage("'{0}' command was not recognised", input);
             return false;
         }
-        else
+
+        switch (input)
         {
-            if (input.Equals("help"))
-            {
+            case "help":
                 Help();
-            }
-            else if (input.Equals("clear"))
-            {
+                break;
+            case "clear":
                 Console.Clear();
                 StartMessage();
-            }
-            else if (input.Equals("exit"))
-            {
+                break;
+            case "exit":
                 Console.ForegroundColor = ConsoleColor.Green;
                 Environment.Exit(1);
-            }
-            else if (input.Equals("dstat"))
-            {
-                disk.PrintDiskStats();
-            }
-            else
-            {
+                break;
+            case "dstat":
+                _systemStorage.PrintDiskStats();
+                break;
+            default:
                 ErrorMessage("'{0}' command requires arguments", input);
-            }
-
-            return true;
+                break;
         }
+
+        return true;
     }
 
     private bool OperateTripleString(string input)
@@ -300,7 +269,7 @@ public class Terminal
             return false;
         }
 
-        if (keys[1].Contains("/") && keys[2].Contains("/"))
+        if (keys[1].Contains('/') && keys[2].Contains('/'))
         {
             path1 = keys[1];
             path2 = keys[2];
@@ -308,7 +277,7 @@ public class Terminal
             path2El = path2.Split("/");
             numberOfPaths = 2;
         }
-        else if (keys[1].Contains("/") && !keys[2].Contains("/"))
+        else if (keys[1].Contains('/') && !keys[2].Contains('/'))
         {
             path1 = keys[1];
             path1El = path1.Split("/");
@@ -325,29 +294,29 @@ public class Terminal
         if (command.Equals("echo") && numberOfPaths == 1 && InspectPath(path1, command, "2"))
         {
             //echo input u terminalu ne smije sadrzavati white space-s inace terminal nece raditi
-            disk.InsertDataToFile(keys[2], path1); //if input data contains "/", it wont be accepted. fix this
+            _systemStorage.InsertDataToFile(keys[2], path1); //if input data contains "/", it wont be accepted. fix this
             return true;
         }
         else if (command.Equals("rename") && numberOfPaths == 1 && InspectPath(path1, command, "2"))
         {
-            disk.Rename(path1, keys[2]);
+            _systemStorage.Rename(path1, keys[2]);
             return true;
         }
         else if (command.Equals("cp") && numberOfPaths == 2 && InspectPath(path1, command, "2") && InspectPath(path2, command, "2"))
         {
             if (path1El.Length == 3 && path2.Equals("ROOT/"))
             {
-                disk.CopyFile(path1El[2], path1El[1], "ROOT");
+                _systemStorage.CopyFile(path1El[2], path1El[1], "ROOT");
                 return true;
             }
             else if (path1El.Length == 2 && path2El.Length == 2)
             {
-                disk.CopyFile(path1El[1], path1El[0], path2El[1]);
+                _systemStorage.CopyFile(path1El[1], path1El[0], path2El[1]);
                 return true;
             }
             else if (path1El.Length == 3 && path2El.Length == 2)
             {
-                disk.CopyFile(path1El[2], path1El[1], path2El[1]);
+                _systemStorage.CopyFile(path1El[2], path1El[1], path2El[1]);
                 return true;
             }
         }
@@ -355,17 +324,17 @@ public class Terminal
         {
             if (path1El.Length == 3 && path2.Equals("ROOT/"))
             {
-                disk.MoveFile(path1El[2], path1El[1], "ROOT");
+                _systemStorage.MoveFile(path1El[2], path1El[1], "ROOT");
                 return true;
             }
             else if (path1El.Length == 2 && path2El.Length == 2)
             {
-                disk.MoveFile(path1El[1], path1El[0], path2El[1]);
+                _systemStorage.MoveFile(path1El[1], path1El[0], path2El[1]);
                 return true;
             }
             else if (path1El.Length == 3 && path2El.Length == 2)
             {
-                disk.MoveFile(path1El[2], path1El[1], path2El[1]);
+                _systemStorage.MoveFile(path1El[2], path1El[1], path2El[1]);
                 return true;
             }
         }
@@ -408,27 +377,27 @@ public class Terminal
                 ErrorMessage("Directory name is too long. Try something with 15 characters or less");
                 return false;
             }
-            else if (createdSubDirectories.Count == 8)
+            else if (_createdSubDirectories.Count == 8)
             {
                 ErrorMessage("Maximum directory count has been reached (8). Adding failed");
                 return false;
             }
-            else if (createdSubDirectories.Contains(pathElements[1]))
+            else if (_createdSubDirectories.Contains(pathElements[1]))
             {
                 ErrorMessage("Directory with the same name already exists. Please enter another name");
                 return false;
             }
             else
             {
-                disk.AddIDirNode(pathElements[1]);
-                createdSubDirectories.AddLast(pathElements[1]);
+                _systemStorage.AddIDirNode(pathElements[1]);
+                _createdSubDirectories.AddLast(pathElements[1]);
                 return true;
             }
         }
         else if (command.Equals("cat") && InspectPath(path, command, "2"))
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
-            disk.DisplayFileContent(path);
+            _systemStorage.DisplayFileContent(path);
             Console.ForegroundColor = ConsoleColor.White;
             return true;
         }
@@ -436,14 +405,14 @@ public class Terminal
         {
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("-------------------------------");
-            disk.PrintFileStats(path);
+            _systemStorage.PrintFileStats(path);
             Console.WriteLine("\n-------------------------------");
             Console.ForegroundColor = ConsoleColor.White;
             return true;
         }
         else if (command.Equals("create") && InspectPath(path, command, "2"))
         {
-            disk.AddIFileNode(path);
+            _systemStorage.AddIFileNode(path);
             return true;
         }
         else if (command.Equals("ls") && InspectPath(path, command, "2")) //ls ROOT/
@@ -451,11 +420,11 @@ public class Terminal
             Console.WriteLine("---------------");
             if (path.Equals("ROOT/"))
             {
-                disk.ListPathContent(path.Replace("/", String.Empty));
+                _systemStorage.ListPathContent(path.Replace("/", String.Empty));
             }
             else
             {
-                disk.ListPathContent(path);
+                _systemStorage.ListPathContent(path);
             }
 
             Console.WriteLine("---------------\n");
@@ -465,18 +434,18 @@ public class Terminal
         {
             if (pathElements.Length == 3)
             {
-                disk.DeleteFileInDIR(pathElements[2], pathElements[1]);
+                _systemStorage.DeleteFileInDIR(pathElements[2], pathElements[1]);
             }
             else
             {
-                if (createdSubDirectories.Contains(pathElements[1]))
+                if (_createdSubDirectories.Contains(pathElements[1]))
                 {
-                    disk.DeleteDirectory(pathElements[1]);
-                    createdSubDirectories.Remove(pathElements[1]);
+                    _systemStorage.DeleteDirectory(pathElements[1]);
+                    _createdSubDirectories.Remove(pathElements[1]);
                 }
                 else
                 {
-                    disk.DeleteFileInDIR(pathElements[1]);
+                    _systemStorage.DeleteFileInDIR(pathElements[1]);
                 }
             }
         }
@@ -484,12 +453,12 @@ public class Terminal
         {
             if (path.Equals("ROOT/"))
             {
-                disk.FlushRootDirectory();
-                createdSubDirectories.Clear();
+                _systemStorage.FlushRootDirectory();
+                _createdSubDirectories.Clear();
             }
-            else if (createdSubDirectories.Contains(pathElements[1]))
+            else if (_createdSubDirectories.Contains(pathElements[1]))
             {
-                disk.DeleteAllFiles(pathElements[1]);
+                _systemStorage.DeleteAllFiles(pathElements[1]);
             }
 
             return true;
@@ -498,7 +467,7 @@ public class Terminal
         {
             try
             {
-                disk.UploadFileToRoot(keys[1]);
+                _systemStorage.UploadFileToRoot(keys[1]);
                 return true;
             }
             catch (Exception ex)
@@ -512,13 +481,9 @@ public class Terminal
             try
             {
                 if (pathElements.Length == 3)
-                {
-                    disk.DownloadFileFromDirectory(pathElements[2], pathElements[1]);
-                }
+                    _systemStorage.DownloadFileFromDirectory(pathElements[2], pathElements[1]);
                 else if (pathElements.Length == 2)
-                {
-                    disk.DownloadFileFromDirectory(pathElements[1], pathElements[0]);
-                }
+                    _systemStorage.DownloadFileFromDirectory(pathElements[1], pathElements[0]);
 
                 return true;
             }
