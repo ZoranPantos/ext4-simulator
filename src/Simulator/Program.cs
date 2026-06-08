@@ -2,7 +2,18 @@ using System;
 using Ext4FileSystemSimulation;
 
 Console.Title = "FS SIM Terminal Window";
-Console.SetWindowSize(70, 40);
+
+if (OperatingSystem.IsWindows() && !Console.IsOutputRedirected)
+{
+    try
+    {
+        Console.SetWindowSize(70, 40);
+    }
+    catch (Exception)
+    {
+        // Window resizing is cosmetic; ignore if the console refuses it.
+    }
+}
 
 try
 {

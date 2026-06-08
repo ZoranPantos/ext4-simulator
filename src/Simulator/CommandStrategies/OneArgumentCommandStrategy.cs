@@ -48,7 +48,7 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
             }
             else
             {
-                _context.Storage.AddIDirNode(pathElements[1]);
+                _context.Storage.AddDirNode(pathElements[1]);
                 _context.CreatedSubDirectories.Add(pathElements[1]);
                 return true;
             }
@@ -67,34 +67,31 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
             _context.Storage.PrintFileStats(path);
             Console.WriteLine("\n-------------------------------");
             Console.ForegroundColor = ConsoleColor.White;
+
             return true;
         }
         else if (command.Equals("create") && _context.InspectPath(path, command, "2"))
         {
-            _context.Storage.AddIFileNode(path);
+            _context.Storage.AddFileNode(path);
             return true;
         }
         else if (command.Equals("ls") && _context.InspectPath(path, command, "2")) //ls ROOT/
         {
             Console.WriteLine("---------------");
+
             if (path.Equals("ROOT/"))
-            {
                 _context.Storage.ListPathContent(path.Replace("/", string.Empty));
-            }
             else
-            {
                 _context.Storage.ListPathContent(path);
-            }
 
             Console.WriteLine("---------------\n");
+
             return true;
         }
         else if (command.Equals("rm") && _context.InspectPath(path, command, "2"))
         {
             if (pathElements.Length == 3)
-            {
                 _context.Storage.DeleteFileInDIR(pathElements[2], pathElements[1]);
-            }
             else
             {
                 if (_context.CreatedSubDirectories.Contains(pathElements[1]))
@@ -103,9 +100,7 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
                     _context.CreatedSubDirectories.Remove(pathElements[1]);
                 }
                 else
-                {
                     _context.Storage.DeleteFileInDIR(pathElements[1]);
-                }
             }
         }
         else if (command.Equals("rm-r") && _context.InspectPath(path, command, "2"))
@@ -116,9 +111,7 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
                 _context.CreatedSubDirectories.Clear();
             }
             else if (_context.CreatedSubDirectories.Contains(pathElements[1]))
-            {
                 _context.Storage.DeleteAllFiles(pathElements[1]);
-            }
 
             return true;
         }

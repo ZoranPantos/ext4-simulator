@@ -2,8 +2,8 @@ namespace Ext4FileSystemSimulation.Nodes;
 
 internal sealed class DirectoryNode
 {
-    public int[] iFileArray;
-    public int[] iSubDirArray;
+    public int[] fileArray;
+    public int[] subDirArray;
 
     public int OrdinalNumber { get; set; }
     public int IDNumber { get; set; }
@@ -16,7 +16,7 @@ internal sealed class DirectoryNode
     {
         OrdinalNumber = IDNumber = FileCount = DirCount = 0;
         Name = Parent = null;
-        iFileArray = new int[16];
-        iSubDirArray = new int[8];
+        fileArray = new int[16];
+        subDirArray = new int[8];
     }
 }

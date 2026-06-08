@@ -8,10 +8,10 @@ internal enum DiskStatLocations : byte
     FileINodesCap = 12,
     DirINodesCap = 16,
     MemDataCap = 20,
-    IFileStart = 24,
-    IFileCount = 28,
-    IDirStart = 32,
-    IDirCount = 36,
+    FileStart = 24,
+    FileCount = 28,
+    DirStart = 32,
+    DirCount = 36,
     FileDataStart = 40,
     OccDisk = 44,
     AvailDisk = 48,
@@ -19,9 +19,9 @@ internal enum DiskStatLocations : byte
     AvailIFile = 56,
     OccIDir = 60,
     AvailIDir = 64,
-    FreeIFileByteAddr = 68,
-    FreeIDirByteAddr = 72,
+    FreeFileByteAddr = 68,
+    FreeDirByteAddr = 72,
     FreeFileDataByteAddr = 76,
-    LastUsedINodeDirID = 80,
-    LastUsedINodeFileID = 84
+    LastUsedNodeDirID = 80,
+    LastUsedNodeFileID = 84
 }
