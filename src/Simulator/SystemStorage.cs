@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using Ext4FileSystemSimulation.Enums;
 using Ext4FileSystemSimulation.Nodes;
 
 namespace Ext4FileSystemSimulation;
@@ -16,13 +17,13 @@ public class SystemStorage
     public SystemStorage()
     {
         InstantiateObjects();
-        disk.Position = (long)MemoryTracker.DiskStatLocations.FreeIFileByteAddr;
+        disk.Position = (long)DiskStatLocations.FreeIFileByteAddr;
         tracker.NextAvailableFileNodeByte = reader.ReadInt32();
         tracker.NextAvailableDirNodeByte = reader.ReadInt32();
         tracker.FirstAvailableFileDataByte = reader.ReadInt32();
-        disk.Position = (int)MemoryTracker.DiskStatLocations.IFileCount;
+        disk.Position = (int)DiskStatLocations.IFileCount;
         tracker.IFileNodeCount = reader.ReadInt32();
-        disk.Position = (int)MemoryTracker.DiskStatLocations.IDirCount;
+        disk.Position = (int)DiskStatLocations.IDirCount;
         tracker.IDirNodeCount = reader.ReadInt32();
         disk.Position = 0;
         WriteBaseStats(reader.ReadInt32() + 1);
@@ -181,11 +182,11 @@ public class SystemStorage
     {
         if (type == 'f')
         {
-            disk.Position = (int)MemoryTracker.DiskStatLocations.IFileCount;
+            disk.Position = (int)DiskStatLocations.IFileCount;
         }
         else if (type == 'd')
         {
-            disk.Position = (int)MemoryTracker.DiskStatLocations.IDirCount;
+            disk.Position = (int)DiskStatLocations.IDirCount;
         }
     }
 
@@ -194,11 +195,11 @@ public class SystemStorage
         //f: file i-node; d: dir i-node
         if (type == 'f')
         {
-            disk.Position = (int)MemoryTracker.DiskStatLocations.LastUsedINodeFileID;
+            disk.Position = (int)DiskStatLocations.LastUsedINodeFileID;
         }
         else if (type == 'd')
         {
-            disk.Position = (int)MemoryTracker.DiskStatLocations.LastUsedINodeDirID;
+            disk.Position = (int)DiskStatLocations.LastUsedINodeDirID;
         }
         else
         {
@@ -216,11 +217,11 @@ public class SystemStorage
         //f: file i-node; d: dir i-node
         if (type == 'f')
         {
-            disk.Position = (int)MemoryTracker.DiskStatLocations.LastUsedINodeFileID;
+            disk.Position = (int)DiskStatLocations.LastUsedINodeFileID;
         }
         else if (type == 'd')
         {
-            disk.Position = (int)MemoryTracker.DiskStatLocations.LastUsedINodeDirID;
+            disk.Position = (int)DiskStatLocations.LastUsedINodeDirID;
         }
         else
         {
@@ -234,7 +235,7 @@ public class SystemStorage
 
     private void CreateRoot()
     {
-        disk.Position = (int)MemoryTracker.DiskStatLocations.FreeIDirByteAddr;
+        disk.Position = (int)DiskStatLocations.FreeIDirByteAddr;
         int position = reader.ReadInt32();
         disk.Position = position;
         writer.Write(1);
@@ -242,25 +243,25 @@ public class SystemStorage
         writer.Write(0);
         writer.Write(0);
         writer.Flush();
-        disk.Position = (int)MemoryTracker.DiskStatLocations.FreeIDirByteAddr;
-        position = reader.ReadInt32() + (int)MemoryTracker.INodeDirOffset.Name;
+        disk.Position = (int)DiskStatLocations.FreeIDirByteAddr;
+        position = reader.ReadInt32() + (int)DirectoryNodeOffset.Name;
         disk.Position = position;
         writer.Write("ROOT");
         writer.Flush();
-        disk.Position = (int)MemoryTracker.DiskStatLocations.FreeIDirByteAddr;
-        position = reader.ReadInt32() + (int)MemoryTracker.INodeDirOffset.Parent;
+        disk.Position = (int)DiskStatLocations.FreeIDirByteAddr;
+        position = reader.ReadInt32() + (int)DirectoryNodeOffset.Parent;
         disk.Position = position;
         writer.Write("null");
         writer.Flush();
         UpdateNodeCount('d', '+');
         tracker.IDirNodeCount = 1;
         UpdateLastUsedID('d', 1);
-        disk.Position = (int)MemoryTracker.DiskStatLocations.FreeIDirByteAddr;
+        disk.Position = (int)DiskStatLocations.FreeIDirByteAddr;
         int value = reader.ReadInt32();
-        disk.Position = (int)MemoryTracker.DiskStatLocations.FreeIDirByteAddr;
+        disk.Position = (int)DiskStatLocations.FreeIDirByteAddr;
         writer.Write(value + tracker.IDirNodeSize);
         tracker.NextAvailableDirNodeByte = value + tracker.IDirNodeSize;
-        disk.Position = (int)MemoryTracker.DiskStatLocations.LastUsedINodeDirID;
+        disk.Position = (int)DiskStatLocations.LastUsedINodeDirID;
         writer.Write(100);
         writer.Flush();
         tracker.OccupiedDirNodeSpace = tracker.IDirNodeSize;
@@ -296,7 +297,7 @@ public class SystemStorage
         }
 
         node.Name = reader.ReadString();
-        disk.Position = address + (int)MemoryTracker.INodeDirOffset.Parent;
+        disk.Position = address + (int)DirectoryNodeOffset.Parent;
         node.Parent = reader.ReadString();
         disk.Position = 0;
 
@@ -306,7 +307,7 @@ public class SystemStorage
     public void UpdateRootStats(char filecount, char dircount, int newIDirNodeAddress, int newIFileNodeAddress)
     {
         //filecount and dircount: + increment, - decrement, o neutral
-        int startAddress = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.FileCount, value, arrayPosition;
+        int startAddress = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.FileCount, value, arrayPosition;
         disk.Position = startAddress;
 
         if (filecount != 'o')
@@ -328,7 +329,7 @@ public class SystemStorage
             }
         }
 
-        startAddress = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.DirCount;
+        startAddress = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.DirCount;
         disk.Position = startAddress;
 
         if (dircount != 'o')
@@ -354,25 +355,25 @@ public class SystemStorage
 
         if (dircount == '+' && newIDirNodeAddress != 0) //adding dir node pointer
         {
-            arrayPosition = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iDirAddr + ((tmp.DirCount - 1) * sizeof(int));
+            arrayPosition = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iDirAddr + ((tmp.DirCount - 1) * sizeof(int));
             disk.Position = arrayPosition;
             writer.Write(newIDirNodeAddress);
         }
         else if (dircount == '-') //removing dir node pointer
         {
-            arrayPosition = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iDirAddr + (tmp.DirCount * sizeof(int));
+            arrayPosition = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iDirAddr + (tmp.DirCount * sizeof(int));
             disk.Position = arrayPosition;
             writer.Write(0);
         }
         if (filecount == '+' && newIFileNodeAddress != 0) //adding file node pointer
         {
-            arrayPosition = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr + ((tmp.FileCount - 1) * sizeof(int));
+            arrayPosition = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iFileAddr + ((tmp.FileCount - 1) * sizeof(int));
             disk.Position = arrayPosition;
             writer.Write(newIFileNodeAddress);
         }
         else if (filecount == '-') //removing file node pointer
         {
-            arrayPosition = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr + (tmp.FileCount * sizeof(int));
+            arrayPosition = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iFileAddr + (tmp.FileCount * sizeof(int));
             disk.Position = 0;
             writer.Write(0);
         }
@@ -383,7 +384,7 @@ public class SystemStorage
     private void UpdateNextFreeIDirAddress(char sign)
     {
         //Updates RAM and HDD memory
-        disk.Position = (int)MemoryTracker.DiskStatLocations.FreeIDirByteAddr;
+        disk.Position = (int)DiskStatLocations.FreeIDirByteAddr;
 
         if (sign == '+')
         {
@@ -404,16 +405,16 @@ public class SystemStorage
         disk.Position = tracker.NextAvailableDirNodeByte;
         writer.Write(tracker.IDirNodeCount + 1);
         int newID = GetLastUsedID('d') + 1;
-        disk.Position = tracker.NextAvailableDirNodeByte + (int)MemoryTracker.INodeDirOffset.ID;
+        disk.Position = tracker.NextAvailableDirNodeByte + (int)DirectoryNodeOffset.ID;
         writer.Write(newID);
         UpdateLastUsedID('d', GetLastUsedID('d') + 1);
-        disk.Position = tracker.NextAvailableDirNodeByte + (int)MemoryTracker.INodeDirOffset.FileCount;
+        disk.Position = tracker.NextAvailableDirNodeByte + (int)DirectoryNodeOffset.FileCount;
         writer.Write(0);
         writer.Write(0);
-        int namePosition = tracker.NextAvailableDirNodeByte + (int)MemoryTracker.INodeDirOffset.Name;
+        int namePosition = tracker.NextAvailableDirNodeByte + (int)DirectoryNodeOffset.Name;
         disk.Position = namePosition;
         writer.Write(name);
-        namePosition = tracker.NextAvailableDirNodeByte + (int)MemoryTracker.INodeDirOffset.Parent;
+        namePosition = tracker.NextAvailableDirNodeByte + (int)DirectoryNodeOffset.Parent;
         disk.Position = namePosition;
         writer.Write("ROOT");
         UpdateRootStats('o', '+', tracker.NextAvailableDirNodeByte, 0);
@@ -427,7 +428,7 @@ public class SystemStorage
 
         for (int i = 0; i < root.DirCount; i++)
         {
-            disk.Position = root.iSubDirArray[i] + (int)MemoryTracker.INodeDirOffset.Name;
+            disk.Position = root.iSubDirArray[i] + (int)DirectoryNodeOffset.Name;
             Console.WriteLine(reader.ReadString());
         }
 
@@ -441,7 +442,7 @@ public class SystemStorage
 
         for (int i = 0; i < root.FileCount; i++)
         {
-            disk.Position = root.iFileArray[i] + (int)MemoryTracker.INodeFileOffset.Name;
+            disk.Position = root.iFileArray[i] + (int)FileNodeOffset.Name;
             Console.WriteLine(reader.ReadString());
         }
     }
@@ -455,7 +456,7 @@ public class SystemStorage
     public void UpdateNextFreeIFileAddress(char sign)
     {
         //Updates RAM and HDD memory
-        disk.Position = (int)MemoryTracker.DiskStatLocations.FreeIFileByteAddr;
+        disk.Position = (int)DiskStatLocations.FreeIFileByteAddr;
 
         if (sign == '+')
         {
@@ -474,11 +475,11 @@ public class SystemStorage
     {
         disk.Position = tracker.NextAvailableFileNodeByte;
         writer.Write(name);
-        disk.Position = tracker.NextAvailableFileNodeByte + (int)MemoryTracker.INodeFileOffset.Directory;
+        disk.Position = tracker.NextAvailableFileNodeByte + (int)FileNodeOffset.Directory;
         writer.Write("ROOT");
-        disk.Position = tracker.NextAvailableFileNodeByte + (int)MemoryTracker.INodeFileOffset.Owner;
+        disk.Position = tracker.NextAvailableFileNodeByte + (int)FileNodeOffset.Owner;
         writer.Write(Environment.UserName);
-        disk.Position = tracker.NextAvailableFileNodeByte + (int)MemoryTracker.INodeFileOffset.Time;
+        disk.Position = tracker.NextAvailableFileNodeByte + (int)FileNodeOffset.Time;
         writer.Write(DateTime.Now.ToShortDateString());
         writer.Flush();
         UpdateRootStats('+', 'o', 0, tracker.NextAvailableFileNodeByte);
@@ -495,7 +496,7 @@ public class SystemStorage
             DirectoryNode root = GetDirStats();
             for (int i = 0; i < root.DirCount; i++)
             {
-                int checkPoint = root.iSubDirArray[i] + (int)MemoryTracker.INodeDirOffset.Name;
+                int checkPoint = root.iSubDirArray[i] + (int)DirectoryNodeOffset.Name;
                 disk.Position = checkPoint;
 
                 if (reader.ReadString().Equals(name))
@@ -511,23 +512,23 @@ public class SystemStorage
     public void UpdateDirStats(int dirAddress, char change, int newFileNodeAddress = 0)
     {
         //change: '+' one file is added, '-' one file is deleted
-        disk.Position = dirAddress + (int)MemoryTracker.INodeDirOffset.FileCount;
+        disk.Position = dirAddress + (int)DirectoryNodeOffset.FileCount;
         int fileCount = reader.ReadInt32();
 
         if (change == '+')
         {
-            disk.Position = dirAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr + (fileCount * sizeof(int));
+            disk.Position = dirAddress + (int)DirectoryNodeOffset.iFileAddr + (fileCount * sizeof(int));
             writer.Write(newFileNodeAddress);
-            disk.Position = dirAddress + (int)MemoryTracker.INodeDirOffset.FileCount;
+            disk.Position = dirAddress + (int)DirectoryNodeOffset.FileCount;
             writer.Write(fileCount + 1);
             UpdateNodeCount('f', change);
             UpdateNextFreeIFileAddress(change);
         }
         else if (change == '-')
         {
-            disk.Position = dirAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr + ((fileCount - 1) * sizeof(int));
+            disk.Position = dirAddress + (int)DirectoryNodeOffset.iFileAddr + ((fileCount - 1) * sizeof(int));
             writer.Write(0);
-            disk.Position = dirAddress + (int)MemoryTracker.INodeDirOffset.FileCount;
+            disk.Position = dirAddress + (int)DirectoryNodeOffset.FileCount;
             writer.Write(fileCount - 1);
             UpdateNodeCount('f', change);
             UpdateNextFreeIFileAddress(change);
@@ -543,7 +544,7 @@ public class SystemStorage
 
         for (int i = 0; i < node.FileCount; i++)
         {
-            disk.Position = node.iFileArray[i] + (int)MemoryTracker.INodeFileOffset.Name;
+            disk.Position = node.iFileArray[i] + (int)FileNodeOffset.Name;
             Console.WriteLine(reader.ReadString());
         }
     }
@@ -581,11 +582,11 @@ public class SystemStorage
 
         disk.Position = tracker.NextAvailableFileNodeByte;
         writer.Write(fileName);
-        disk.Position = tracker.NextAvailableFileNodeByte + (int)MemoryTracker.INodeFileOffset.Directory;
+        disk.Position = tracker.NextAvailableFileNodeByte + (int)FileNodeOffset.Directory;
         writer.Write(dirName);
-        disk.Position = tracker.NextAvailableFileNodeByte + (int)MemoryTracker.INodeFileOffset.Owner;
+        disk.Position = tracker.NextAvailableFileNodeByte + (int)FileNodeOffset.Owner;
         writer.Write(Environment.UserName);
-        disk.Position = tracker.NextAvailableFileNodeByte + (int)MemoryTracker.INodeFileOffset.Time;
+        disk.Position = tracker.NextAvailableFileNodeByte + (int)FileNodeOffset.Time;
         writer.Write(DateTime.Now.ToShortDateString());
         writer.Flush();
         UpdateDirStats(subrootAddr, '+', tracker.NextAvailableFileNodeByte);
@@ -664,14 +665,14 @@ public class SystemStorage
 
     private void ChangeFileName(int fileAddress, string newName)
     {
-        disk.Position = fileAddress + (int)MemoryTracker.INodeFileOffset.Name;
+        disk.Position = fileAddress + (int)FileNodeOffset.Name;
         writer.Write(newName);
         writer.Flush();
     }
 
     private void ChangeDirectoryName(int dirAddress, string newName)
     {
-        disk.Position = dirAddress + (int)MemoryTracker.INodeDirOffset.Name;
+        disk.Position = dirAddress + (int)DirectoryNodeOffset.Name;
         writer.Write(newName);
         writer.Flush();
     }
@@ -706,7 +707,7 @@ public class SystemStorage
             {
                 for (int i = 0; i < node.FileCount; i++)
                 {
-                    disk.Position = node.iFileArray[i] + (int)MemoryTracker.INodeFileOffset.Name;
+                    disk.Position = node.iFileArray[i] + (int)FileNodeOffset.Name;
                     if (reader.ReadString().Equals(fileName))
                     {
                         return node.iFileArray[i];
@@ -844,16 +845,16 @@ public class SystemStorage
         }
 
         int fileSize = 0;
-        disk.Position = fileNodeAddress + (int)MemoryTracker.INodeFileOffset.BlockCount;
+        disk.Position = fileNodeAddress + (int)FileNodeOffset.BlockCount;
         writer.Write(blockCount);
-        disk.Position = fileNodeAddress + (int)MemoryTracker.INodeFileOffset.BlockAddr;
+        disk.Position = fileNodeAddress + (int)FileNodeOffset.BlockAddr;
 
         for (int i = 0; i < blockCount; i++)
         {
             writer.Write(matrix[0, i]);
         }
 
-        disk.Position = fileNodeAddress + (int)MemoryTracker.INodeFileOffset.BlockSizeAddr;
+        disk.Position = fileNodeAddress + (int)FileNodeOffset.BlockSizeAddr;
 
         for (int i = 0; i < blockCount; i++)
         {
@@ -861,7 +862,7 @@ public class SystemStorage
             fileSize += matrix[1, i];
         }
 
-        disk.Position = fileNodeAddress + (int)MemoryTracker.INodeFileOffset.Size;
+        disk.Position = fileNodeAddress + (int)FileNodeOffset.Size;
         writer.Write(fileSize);
         int index = 0, j = 0;
 
@@ -921,13 +922,13 @@ public class SystemStorage
         {
             disk.Position = address;
             Console.WriteLine("File name: {0}", reader.ReadString());
-            disk.Position = address + (int)MemoryTracker.INodeFileOffset.Directory;
+            disk.Position = address + (int)FileNodeOffset.Directory;
             Console.WriteLine("Directory: {0}", reader.ReadString());
-            disk.Position = address + (int)MemoryTracker.INodeFileOffset.Owner;
+            disk.Position = address + (int)FileNodeOffset.Owner;
             Console.WriteLine("Owner: {0}", reader.ReadString());
-            disk.Position = address + (int)MemoryTracker.INodeFileOffset.Time;
+            disk.Position = address + (int)FileNodeOffset.Time;
             Console.WriteLine("Creation time: {0}", reader.ReadString());
-            disk.Position = address + (int)MemoryTracker.INodeFileOffset.BlockCount;
+            disk.Position = address + (int)FileNodeOffset.BlockCount;
             int blockCount = reader.ReadInt32();
             Console.WriteLine("Block count: {0}", blockCount);
             Console.WriteLine("File size: {0}", reader.ReadInt32());
@@ -938,7 +939,7 @@ public class SystemStorage
                 Console.Write("{0}, ", reader.ReadInt32());
             }
 
-            disk.Position = address + (int)MemoryTracker.INodeFileOffset.BlockSizeAddr;
+            disk.Position = address + (int)FileNodeOffset.BlockSizeAddr;
             Console.Write("\nBlock sizes: ");
 
             for (int i = 0; i < blockCount; i++)
@@ -993,17 +994,17 @@ public class SystemStorage
         else
         {
             string result = "";
-            disk.Position = address + (int)MemoryTracker.INodeFileOffset.BlockCount;
+            disk.Position = address + (int)FileNodeOffset.BlockCount;
             int blockCount = reader.ReadInt32();
             int[,] blockMatrix = new int[2, blockCount];
-            disk.Position = address + (int)MemoryTracker.INodeFileOffset.BlockAddr;
+            disk.Position = address + (int)FileNodeOffset.BlockAddr;
 
             for (int i = 0; i < blockCount; i++)
             {
                 blockMatrix[0, i] = reader.ReadInt32();
             }
 
-            disk.Position = address + (int)MemoryTracker.INodeFileOffset.BlockSizeAddr;
+            disk.Position = address + (int)FileNodeOffset.BlockSizeAddr;
 
             for (int i = 0; i < blockCount; i++)
             {
@@ -1025,22 +1026,22 @@ public class SystemStorage
 
     private void DeleteFileData(int fileNodeAddress)
     {
-        disk.Position = fileNodeAddress + (int)MemoryTracker.INodeFileOffset.Size;
+        disk.Position = fileNodeAddress + (int)FileNodeOffset.Size;
         int size = reader.ReadInt32();
 
         if (size > 0)
         {
-            disk.Position = fileNodeAddress + (int)MemoryTracker.INodeFileOffset.BlockCount;
+            disk.Position = fileNodeAddress + (int)FileNodeOffset.BlockCount;
             int blockCount = reader.ReadInt32();
             int[,] blockMatrix = new int[2, blockCount];
-            disk.Position = fileNodeAddress + (int)MemoryTracker.INodeFileOffset.BlockAddr;
+            disk.Position = fileNodeAddress + (int)FileNodeOffset.BlockAddr;
 
             for (int i = 0; i < blockCount; i++)
             {
                 blockMatrix[0, i] = reader.ReadInt32();
             }
 
-            disk.Position = fileNodeAddress + (int)MemoryTracker.INodeFileOffset.BlockSizeAddr;
+            disk.Position = fileNodeAddress + (int)FileNodeOffset.BlockSizeAddr;
 
             for (int i = 0; i < blockCount; i++)
             {
@@ -1063,11 +1064,11 @@ public class SystemStorage
     {
         if (dirAddress == 0)
         {
-            disk.Position = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr;
+            disk.Position = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iFileAddr;
         }
         else
         {
-            disk.Position = dirAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr;
+            disk.Position = dirAddress + (int)DirectoryNodeOffset.iFileAddr;
         }
 
         int tmpValue = 0, count = 16;
@@ -1094,11 +1095,11 @@ public class SystemStorage
 
         if (dirAddress == 0)
         {
-            disk.Position = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr;
+            disk.Position = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iFileAddr;
         }
         else
         {
-            disk.Position = dirAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr;
+            disk.Position = dirAddress + (int)DirectoryNodeOffset.iFileAddr;
         }
 
         int address;
@@ -1114,13 +1115,13 @@ public class SystemStorage
         }
         if (dirAddress == 0)
         {
-            WriteZeros(tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr, 16 * 4);
-            disk.Position = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr;
+            WriteZeros(tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iFileAddr, 16 * 4);
+            disk.Position = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iFileAddr;
         }
         else
         {
-            WriteZeros(dirAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr, 16 * 4);
-            disk.Position = dirAddress + (int)MemoryTracker.INodeDirOffset.iFileAddr;
+            WriteZeros(dirAddress + (int)DirectoryNodeOffset.iFileAddr, 16 * 4);
+            disk.Position = dirAddress + (int)DirectoryNodeOffset.iFileAddr;
         }
 
         int count = addrQueue.Count;
@@ -1140,11 +1141,11 @@ public class SystemStorage
 
         if (dirAddress == 0)
         {
-            address = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.FileCount;
+            address = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.FileCount;
         }
         else
         {
-            address = dirAddress + (int)MemoryTracker.INodeDirOffset.FileCount;
+            address = dirAddress + (int)DirectoryNodeOffset.FileCount;
         }
 
         disk.Position = address;
@@ -1204,7 +1205,7 @@ public class SystemStorage
 
                 for (int i = 0; i < node.FileCount; i++)
                 {
-                    disk.Position = node.iFileArray[i] + (int)MemoryTracker.INodeFileOffset.Name;
+                    disk.Position = node.iFileArray[i] + (int)FileNodeOffset.Name;
                     fileNames.Enqueue(reader.ReadString());
                 }
                 while (fileNames.Count > 0)
@@ -1216,7 +1217,7 @@ public class SystemStorage
             //next one is part for deleting dir node
             WriteZeros(dirAddress, tracker.IDirNodeSize);
             //dir node address to zero in ROOT
-            disk.Position = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iDirAddr;
+            disk.Position = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iDirAddr;
             int tmpValue = 0, count = 8;
 
             while (tmpValue != dirAddress && count > 0)
@@ -1235,7 +1236,7 @@ public class SystemStorage
 
             //rewrite dir node address array in ROOT
             Queue<int> addrQueue = new Queue<int>();
-            disk.Position = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iDirAddr;
+            disk.Position = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iDirAddr;
             int address;
 
             for (int i = 0; i < 8; i++)
@@ -1247,8 +1248,8 @@ public class SystemStorage
                 }
             }
 
-            WriteZeros(tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iDirAddr, 8 * 4);
-            disk.Position = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.iDirAddr;
+            WriteZeros(tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iDirAddr, 8 * 4);
+            disk.Position = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iDirAddr;
             int count2 = addrQueue.Count;
 
             for (int i = 0; i < count2; i++)
@@ -1260,7 +1261,7 @@ public class SystemStorage
             //decrement dir node update to ROOT
             //just to file node and ram, not to the disc stats
             int address2;
-            address2 = tracker.DirNodesStartAddress + (int)MemoryTracker.INodeDirOffset.DirCount;
+            address2 = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.DirCount;
             disk.Position = address2;
             int count3 = reader.ReadInt32();
             disk.Position = address2;
@@ -1294,7 +1295,7 @@ public class SystemStorage
 
                 for (int i = 0; i < node.FileCount; i++)
                 {
-                    disk.Position = node.iFileArray[i] + (int)MemoryTracker.INodeFileOffset.Name;
+                    disk.Position = node.iFileArray[i] + (int)FileNodeOffset.Name;
                     fileNames.Enqueue(reader.ReadString());
                 }
                 while (fileNames.Count > 0)
@@ -1327,7 +1328,7 @@ public class SystemStorage
 
                 for (int i = 0; i < node.DirCount; i++)
                 {
-                    disk.Position = node.iSubDirArray[i] + (int)MemoryTracker.INodeDirOffset.Name;
+                    disk.Position = node.iSubDirArray[i] + (int)DirectoryNodeOffset.Name;
                     dirNames.Enqueue(reader.ReadString());
                 }
                 while (dirNames.Count > 0)
@@ -1458,10 +1459,10 @@ public class SystemStorage
     private byte[] ExtractFileData(int fileAddress)
     {
         int blockCount = 0;
-        disk.Position = fileAddress + (int)MemoryTracker.INodeFileOffset.Size;
+        disk.Position = fileAddress + (int)FileNodeOffset.Size;
         byte[] output = new byte[reader.ReadInt32()];
         int byteIndex = 0;
-        disk.Position = fileAddress + (int)MemoryTracker.INodeFileOffset.BlockCount;
+        disk.Position = fileAddress + (int)FileNodeOffset.BlockCount;
 
         if (output.Length > 0)
         {
@@ -1469,14 +1470,14 @@ public class SystemStorage
         }
 
         int[,] matrix = new int[2, blockCount];
-        disk.Position = fileAddress + (int)MemoryTracker.INodeFileOffset.BlockAddr;
+        disk.Position = fileAddress + (int)FileNodeOffset.BlockAddr;
 
         for (int i = 0; i < blockCount; i++)
         {
             matrix[0, i] = reader.ReadInt32();
         }
 
-        disk.Position = fileAddress + (int)MemoryTracker.INodeFileOffset.BlockSizeAddr;
+        disk.Position = fileAddress + (int)FileNodeOffset.BlockSizeAddr;
 
         for (int i = 0; i < blockCount; i++)
         {

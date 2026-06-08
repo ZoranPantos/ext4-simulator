@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Ext4FileSystemSimulation.CommandStrategies;
+using Ext4FileSystemSimulation.Enums;
 
 namespace Ext4FileSystemSimulation;
 
@@ -24,9 +25,9 @@ public class Terminal : ITerminalContext
 
         _strategies = new Dictionary<InputScenario, ICommandStrategy>
         {
-            [InputScenario.SingleString] = new NoArgumentCommandStrategy(this),
-            [InputScenario.DoubleString] = new OneArgumentCommandStrategy(this),
-            [InputScenario.TripleString] = new TwoArgumentCommandStrategy(this)
+            [InputScenario.NoArgument] = new NoArgumentCommandStrategy(this),
+            [InputScenario.OneArgument] = new OneArgumentCommandStrategy(this),
+            [InputScenario.TwoArgument] = new TwoArgumentCommandStrategy(this)
         };
     }
 
@@ -65,7 +66,7 @@ public class Terminal : ITerminalContext
         string trimmedInput = input.Trim();
 
         if (!trimmedInput.Contains(' '))
-            return InputScenario.SingleString;
+            return InputScenario.NoArgument;
 
         int whiteSpaceCount = 0;
 
@@ -77,9 +78,9 @@ public class Terminal : ITerminalContext
 
         return whiteSpaceCount switch
         {
-            1 => InputScenario.DoubleString,
-            2 => InputScenario.TripleString,
-            _ => InputScenario.MultipleString
+            1 => InputScenario.OneArgument,
+            2 => InputScenario.TwoArgument,
+            _ => InputScenario.TooManyArguments
         };
     }
 
@@ -96,14 +97,6 @@ public class Terminal : ITerminalContext
 
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine();
-    }
-
-    public enum InputScenario : byte
-    {
-        SingleString = 1,
-        DoubleString = 2,
-        TripleString = 3,
-        MultipleString = 4
     }
 
     // ITerminalContext - services exposed to the command strategies.
