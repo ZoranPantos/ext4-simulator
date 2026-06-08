@@ -3,7 +3,6 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>OOS_Project_2019___File_System_Simulation</RootNamespace>
   </PropertyGroup>
 
 </Project>
