@@ -7,7 +7,7 @@ using Ext4FileSystemSimulation.Nodes;
 
 namespace Ext4FileSystemSimulation;
 
-public class SystemStorage
+internal sealed class SystemStorage
 {
     private FileStream disk;
     private BinaryReader reader;
@@ -22,9 +22,9 @@ public class SystemStorage
         tracker.NextAvailableDirNodeByte = reader.ReadInt32();
         tracker.FirstAvailableFileDataByte = reader.ReadInt32();
         disk.Position = (int)DiskStatLocations.IFileCount;
-        tracker.IFileNodeCount = reader.ReadInt32();
+        tracker.FileNodeCount = reader.ReadInt32();
         disk.Position = (int)DiskStatLocations.IDirCount;
-        tracker.IDirNodeCount = reader.ReadInt32();
+        tracker.DirNodeCount = reader.ReadInt32();
         disk.Position = 0;
         WriteBaseStats(reader.ReadInt32() + 1);
 
@@ -52,8 +52,8 @@ public class SystemStorage
             tracker.NextAvailableFileNodeByte = tracker.FileNodesStartAddress;
             tracker.NextAvailableDirNodeByte = tracker.DirNodesStartAddress;
             tracker.FirstAvailableFileDataByte = tracker.FileDataStartAddress;
-            tracker.IFileNodeCount = 0;
-            tracker.IDirNodeCount = 0;
+            tracker.FileNodeCount = 0;
+            tracker.DirNodeCount = 0;
         }
 
         writer.Write(startup + 1); //Write methods uses sent type's needed allocation and not necessary 1b; example it will write this int into 4B = 32b
@@ -63,9 +63,9 @@ public class SystemStorage
         writer.Write(tracker.DirNodesCapacity);
         writer.Write(tracker.MemoryDataCapacity);
         writer.Write(tracker.FileNodesStartAddress);
-        writer.Write(tracker.IFileNodeCount);
+        writer.Write(tracker.FileNodeCount);
         writer.Write(tracker.DirNodesStartAddress);
-        writer.Write(tracker.IDirNodeCount);
+        writer.Write(tracker.DirNodeCount);
         writer.Write(tracker.FileDataStartAddress);
         writer.Write(tracker.OccupiedDiskSpace);
         writer.Write(tracker.AvailableDiskSpace);
@@ -149,11 +149,11 @@ public class SystemStorage
 
             if (type == 'd')
             {
-                tracker.IDirNodeCount++;
+                tracker.DirNodeCount++;
             }
             else if (type == 'f')
             {
-                tracker.IFileNodeCount++;
+                tracker.FileNodeCount++;
             }
         }
         else if (sign == '-' && count > 0)
@@ -162,11 +162,11 @@ public class SystemStorage
 
             if (type == 'd')
             {
-                tracker.IDirNodeCount--;
+                tracker.DirNodeCount--;
             }
             else if (type == 'f')
             {
-                tracker.IFileNodeCount--;
+                tracker.FileNodeCount--;
             }
         }
         else
@@ -254,17 +254,17 @@ public class SystemStorage
         writer.Write("null");
         writer.Flush();
         UpdateNodeCount('d', '+');
-        tracker.IDirNodeCount = 1;
+        tracker.DirNodeCount = 1;
         UpdateLastUsedID('d', 1);
         disk.Position = (int)DiskStatLocations.FreeIDirByteAddr;
         int value = reader.ReadInt32();
         disk.Position = (int)DiskStatLocations.FreeIDirByteAddr;
-        writer.Write(value + tracker.IDirNodeSize);
-        tracker.NextAvailableDirNodeByte = value + tracker.IDirNodeSize;
+        writer.Write(value + tracker.DirNodeSize);
+        tracker.NextAvailableDirNodeByte = value + tracker.DirNodeSize;
         disk.Position = (int)DiskStatLocations.LastUsedINodeDirID;
         writer.Write(100);
         writer.Flush();
-        tracker.OccupiedDirNodeSpace = tracker.IDirNodeSize;
+        tracker.OccupiedDirNodeSpace = tracker.DirNodeSize;
         disk.Position = 0;
     }
 
@@ -388,12 +388,12 @@ public class SystemStorage
 
         if (sign == '+')
         {
-            tracker.NextAvailableDirNodeByte += tracker.IDirNodeSize;
+            tracker.NextAvailableDirNodeByte += tracker.DirNodeSize;
             writer.Write(tracker.NextAvailableDirNodeByte);
         }
         else if (sign == '-')
         {
-            tracker.NextAvailableDirNodeByte -= tracker.IDirNodeSize;
+            tracker.NextAvailableDirNodeByte -= tracker.DirNodeSize;
             writer.Write(tracker.NextAvailableDirNodeByte);
         }
 
@@ -403,7 +403,7 @@ public class SystemStorage
     public void AddIDirNode(string name) //mkdir
     {
         disk.Position = tracker.NextAvailableDirNodeByte;
-        writer.Write(tracker.IDirNodeCount + 1);
+        writer.Write(tracker.DirNodeCount + 1);
         int newID = GetLastUsedID('d') + 1;
         disk.Position = tracker.NextAvailableDirNodeByte + (int)DirectoryNodeOffset.ID;
         writer.Write(newID);
@@ -460,12 +460,12 @@ public class SystemStorage
 
         if (sign == '+')
         {
-            tracker.NextAvailableFileNodeByte += tracker.IFileNodeSize;
+            tracker.NextAvailableFileNodeByte += tracker.FileNodeSize;
             writer.Write(tracker.NextAvailableFileNodeByte);
         }
         else if (sign == '-')
         {
-            tracker.NextAvailableFileNodeByte -= tracker.IFileNodeSize;
+            tracker.NextAvailableFileNodeByte -= tracker.FileNodeSize;
             writer.Write(tracker.NextAvailableFileNodeByte);
         }
         writer.Flush();
@@ -1057,7 +1057,7 @@ public class SystemStorage
 
     private void DeleteFileNode(int fileNodeAddress)
     {
-        WriteZeros(fileNodeAddress, tracker.IFileNodeSize);
+        WriteZeros(fileNodeAddress, tracker.FileNodeSize);
     }
 
     private void FileNodeAddressToZeroInDIR(int fileNodeAddress, int dirAddress = 0) //by deault it works with ROOT
@@ -1153,7 +1153,7 @@ public class SystemStorage
         disk.Position = address;
         writer.Write(count - 1);
         writer.Flush();
-        tracker.IFileNodeCount--;
+        tracker.FileNodeCount--;
     }
 
     public void DeleteFileInDIR(string fileName, string dirName = null) //by default works with ROOT
@@ -1215,7 +1215,7 @@ public class SystemStorage
             }
 
             //next one is part for deleting dir node
-            WriteZeros(dirAddress, tracker.IDirNodeSize);
+            WriteZeros(dirAddress, tracker.DirNodeSize);
             //dir node address to zero in ROOT
             disk.Position = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.iDirAddr;
             int tmpValue = 0, count = 8;
@@ -1267,7 +1267,7 @@ public class SystemStorage
             disk.Position = address2;
             writer.Write(count3 - 1);
             writer.Flush();
-            tracker.IFileNodeCount--;
+            tracker.FileNodeCount--;
         }
     }
 

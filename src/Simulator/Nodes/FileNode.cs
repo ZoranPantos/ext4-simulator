@@ -1,6 +1,6 @@
 namespace Ext4FileSystemSimulation.Nodes;
 
-public class FileNode
+internal sealed class FileNode
 {
     private readonly FileMetadata _metadata;
 
@@ -21,7 +21,7 @@ public class FileNode
     }
 }
 
-public class FileMetadata
+internal sealed class FileMetadata
 {
     public string Name { get; set; }
     public string Owner { get; set; }

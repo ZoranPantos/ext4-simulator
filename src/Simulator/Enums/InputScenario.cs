@@ -1,6 +1,6 @@
 namespace Ext4FileSystemSimulation.Enums;
 
-public enum InputScenario : byte
+internal enum InputScenario : byte
 {
     NoArgument = 1,
     OneArgument = 2,

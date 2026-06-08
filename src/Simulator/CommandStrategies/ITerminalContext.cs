@@ -10,12 +10,9 @@ namespace Ext4FileSystemSimulation.CommandStrategies;
 internal interface ITerminalContext
 {
     SystemStorage Storage { get; }
-
     ICollection<string> CreatedSubDirectories { get; }
 
     bool IsCommandValid(string command);
-
     bool InspectPath(string path, string command, string depthSupport);
-
     void ShowStartMessage();
 }

@@ -5,7 +5,7 @@ using Ext4FileSystemSimulation.Enums;
 
 namespace Ext4FileSystemSimulation;
 
-public class Terminal : ITerminalContext
+internal sealed class Terminal : ITerminalContext
 {
     private readonly SystemStorage _systemStorage;
 

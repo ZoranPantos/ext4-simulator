@@ -1,45 +1,31 @@
-﻿namespace Ext4FileSystemSimulation;
+namespace Ext4FileSystemSimulation;
 
-class MemoryTracker
+internal sealed class MemoryTracker
 {
-    private readonly int memoryDataLocation = 0;
-    private readonly int diskCapacity = 20000000;
-    private readonly int filesDataCapacity = 15500000;
-    private readonly int fileNodesCapacity = 3000000;
-    private readonly int dirNodesCapacity = 1000000;
-    private readonly int memoryDataCapacity = 500000;
-    private readonly int fileNodesStartAddress = 500000;
-    private readonly int dirNodesStartAddress = 3500000;
-    private readonly int fileDataStartAddress = 4500000;
-    private readonly int maxFileSize = 64000;
-    private readonly int minBlockSize = 5;
-    private readonly int iDirNodeSize = 144;
-    private readonly int iFileNodeSize = 152;
-
-    public int IFileNodeSize { get { return iFileNodeSize; } }
-    public int IDirNodeSize { get { return iDirNodeSize; } }
-    public int MaxFileSize { get { return maxFileSize; } }
-    public int MinBlockSize { get { return minBlockSize; } }
-    public int FileDataStartAddress { get { return fileDataStartAddress; } }
-    public int DirNodesStartAddress { get { return dirNodesStartAddress; } }
-    public int FileNodesStartAddress { get { return fileNodesStartAddress; } }
-    public int MemoryDataCapacity { get { return memoryDataCapacity; } }
-    public int MemoryDataLocation { get { return memoryDataLocation; } }
-    public int DiskCapacity { get { return diskCapacity; } }
-    public int FileDataCapacity { get { return filesDataCapacity; } }
-    public int FileNodesCapacity { get { return fileNodesCapacity; } }
-    public int DirNodesCapacity { get { return dirNodesCapacity; } }
-    public int OccupiedDiskSpace { get { return memoryDataCapacity + OccupiedDirNodeSpace + OccupiedFileNodeSpace + OccupiedFilesDataSpace; } }
-    public int AvailableDiskSpace { get { return AvailableDirNodeSpace + AvailableFileNodeSpace + AvailableFilesDataSpace; } }
-    public int OccupiedFilesDataSpace { get; set; }
-    public int AvailableFilesDataSpace { get { return filesDataCapacity - OccupiedFilesDataSpace; } }
-    public int OccupiedFileNodeSpace { get; set; }
-    public int AvailableFileNodeSpace { get { return FileNodesCapacity - OccupiedFileNodeSpace; } }
+    public int FileNodeSize { get; } = 152;
+    public int DirNodeSize { get; } = 144;
+    public int MaxFileSize { get; } = 64000;
+    public int MinBlockSize { get; } = 5;
+    public int FileDataStartAddress { get; } = 4500000;
+    public int DirNodesStartAddress { get; } = 3500000;
+    public int FileNodesStartAddress { get; } = 500000;
+    public int MemoryDataCapacity { get; } = 500000;
+    public int MemoryDataLocation { get; } = 0;
+    public int DiskCapacity { get; } = 20000000;
+    public int FileDataCapacity { get; } = 15500000;
+    public int FileNodesCapacity { get; } = 3000000;
+    public int DirNodesCapacity { get; } = 1000000;
+    public int OccupiedFilesDataSpace { get; }
+    public int OccupiedFileNodeSpace { get; }
     public int OccupiedDirNodeSpace { get; set; }
-    public int AvailableDirNodeSpace { get { return DirNodesCapacity - OccupiedDirNodeSpace; } }
     public int NextAvailableFileNodeByte { get; set; }
     public int NextAvailableDirNodeByte { get; set; }
     public int FirstAvailableFileDataByte { get; set; }
-    public int IFileNodeCount { get; set; }
-    public int IDirNodeCount { get; set; }
+    public int FileNodeCount { get; set; }
+    public int DirNodeCount { get; set; }
+    public int OccupiedDiskSpace => MemoryDataCapacity + OccupiedDirNodeSpace + OccupiedFileNodeSpace + OccupiedFilesDataSpace;
+    public int AvailableDiskSpace => AvailableDirNodeSpace + AvailableFileNodeSpace + AvailableFilesDataSpace;
+    public int AvailableFilesDataSpace => FileDataCapacity - OccupiedFilesDataSpace;
+    public int AvailableFileNodeSpace => FileNodesCapacity - OccupiedFileNodeSpace;
+    public int AvailableDirNodeSpace => DirNodesCapacity - OccupiedDirNodeSpace;
 }

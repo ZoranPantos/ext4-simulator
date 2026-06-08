@@ -1,6 +1,6 @@
 namespace Ext4FileSystemSimulation.Nodes;
 
-public class DirectoryNode
+internal sealed class DirectoryNode
 {
     public int[] iFileArray;
     public int[] iSubDirArray;
