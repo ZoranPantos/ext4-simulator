@@ -1,4 +1,5 @@
 using System;
+using Ext4FileSystemSimulation.Strategies.ValidationStrategies;
 
 namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
@@ -9,9 +10,16 @@ namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 internal sealed class OneArgumentCommandStrategy : ICommandStrategy
 {
     private readonly ITerminalContext _context;
+    private readonly IValidationStrategy _pathValidator;
+    private readonly IValidationStrategy _directoryCreationValidator;
 
     public OneArgumentCommandStrategy(ITerminalContext context)
-        => _context = context ?? throw new ArgumentNullException(nameof(context));
+    {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+
+        _pathValidator = new PathValidationStrategy(context, "2");
+        _directoryCreationValidator = new DirectoryCreationValidationStrategy(context);
+    }
 
     public bool Handle(string input)
     {
@@ -25,35 +33,14 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
             Terminal.ErrorMessage("'{0}' command was not recognised", command);
             return false;
         }
-        else if (command.Equals("mkdir") && _context.InspectPath(path, command, "1"))
+        else if (command.Equals("mkdir") && _directoryCreationValidator.IsValid(keys))
         {
-            if (pathElements[1].Equals("ROOT"))
-            {
-                Terminal.ErrorMessage("ROOT name is not available for use");
-                return false;
-            }
-            else if (pathElements[1].Length > 15)
-            {
-                Terminal.ErrorMessage("Directory name is too long. Try something with 15 characters or less");
-                return false;
-            }
-            else if (_context.CreatedSubDirectories.Count == 8)
-            {
-                Terminal.ErrorMessage("Maximum directory count has been reached (8). Adding failed");
-                return false;
-            }
-            else if (_context.CreatedSubDirectories.Contains(pathElements[1]))
-            {
-                Terminal.ErrorMessage("Directory with the same name already exists. Please enter another name");
-                return false;
-            }
-
             _context.Storage.AddDirNode(pathElements[1]);
             _context.CreatedSubDirectories.Add(pathElements[1]);
 
             return true;
         }
-        else if (command.Equals("cat") && _context.InspectPath(path, command, "2"))
+        else if (command.Equals("cat") && _pathValidator.IsValid(keys))
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
             _context.Storage.DisplayFileContent(path);
@@ -61,7 +48,7 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
 
             return true;
         }
-        else if (command.Equals("stat") && _context.InspectPath(path, command, "2"))
+        else if (command.Equals("stat") && _pathValidator.IsValid(keys))
         {
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("-------------------------------");
@@ -71,12 +58,12 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
 
             return true;
         }
-        else if (command.Equals("create") && _context.InspectPath(path, command, "2"))
+        else if (command.Equals("create") && _pathValidator.IsValid(keys))
         {
             _context.Storage.AddFileNode(path);
             return true;
         }
-        else if (command.Equals("ls") && _context.InspectPath(path, command, "2")) //ls ROOT/
+        else if (command.Equals("ls") && _pathValidator.IsValid(keys)) //ls ROOT/
         {
             Console.WriteLine("---------------");
 
@@ -89,7 +76,7 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
 
             return true;
         }
-        else if (command.Equals("rm") && _context.InspectPath(path, command, "2"))
+        else if (command.Equals("rm") && _pathValidator.IsValid(keys))
         {
             if (pathElements.Length == 3)
                 _context.Storage.DeleteFileInDIR(pathElements[2], pathElements[1]);
@@ -104,7 +91,7 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
                     _context.Storage.DeleteFileInDIR(pathElements[1]);
             }
         }
-        else if (command.Equals("rm-r") && _context.InspectPath(path, command, "2"))
+        else if (command.Equals("rm-r") && _pathValidator.IsValid(keys))
         {
             if (path.Equals("ROOT/"))
             {
@@ -129,7 +116,7 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
                 return false;
             }
         }
-        else if (command.Equals("get") && _context.InspectPath(path, command, "2"))
+        else if (command.Equals("get") && _pathValidator.IsValid(keys))
         {
             try
             {

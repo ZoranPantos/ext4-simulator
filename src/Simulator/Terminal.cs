@@ -38,8 +38,6 @@ internal sealed class Terminal : ITerminalContext
 
         while (true)
         {
-            flag = false;
-
             do
             {
                 Console.Write("command> ");
@@ -47,7 +45,7 @@ internal sealed class Terminal : ITerminalContext
                 string trimmedInput = userInput.Trim();
                 flag = Operate(trimmedInput);
             }
-            while (flag == false);
+            while (!flag);
         }
     }
 
@@ -167,11 +165,10 @@ internal sealed class Terminal : ITerminalContext
         {
             ErrorMessage("Incorrect path");
             PrintPathExample();
+
             return false;
         }
         else
-        {
             return true;
-        }
     }
 }

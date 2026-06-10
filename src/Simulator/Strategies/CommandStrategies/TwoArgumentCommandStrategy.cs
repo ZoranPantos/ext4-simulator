@@ -1,4 +1,5 @@
 using System;
+using Ext4FileSystemSimulation.Strategies.ValidationStrategies;
 
 namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
@@ -8,9 +9,16 @@ namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 internal sealed class TwoArgumentCommandStrategy : ICommandStrategy
 {
     private readonly ITerminalContext _context;
+    private readonly IValidationStrategy _pathValidator;
+    private readonly IValidationStrategy _twoPathValidator;
 
-    public TwoArgumentCommandStrategy(ITerminalContext context) =>
+    public TwoArgumentCommandStrategy(ITerminalContext context)
+    {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+
+        _pathValidator = new PathValidationStrategy(context, "2");
+        _twoPathValidator = new TwoPathValidationStrategy(context);
+    }
 
     public bool Handle(string input)
     {
@@ -50,18 +58,18 @@ internal sealed class TwoArgumentCommandStrategy : ICommandStrategy
             return false;
         }
 
-        if (command.Equals("echo") && numberOfPaths == 1 && _context.InspectPath(path1, command, "2"))
+        if (command.Equals("echo") && numberOfPaths == 1 && _pathValidator.IsValid(keys))
         {
             //echo input u terminalu ne smije sadrzavati white space-s inace terminal nece raditi
             _context.Storage.InsertDataToFile(keys[2], path1); //if input data contains "/", it wont be accepted. fix this
             return true;
         }
-        else if (command.Equals("rename") && numberOfPaths == 1 && _context.InspectPath(path1, command, "2"))
+        else if (command.Equals("rename") && numberOfPaths == 1 && _pathValidator.IsValid(keys))
         {
             _context.Storage.Rename(path1, keys[2]);
             return true;
         }
-        else if (command.Equals("cp") && numberOfPaths == 2 && _context.InspectPath(path1, command, "2") && _context.InspectPath(path2, command, "2"))
+        else if (command.Equals("cp") && numberOfPaths == 2 && _twoPathValidator.IsValid(keys))
         {
             if (path1El.Length == 3 && path2.Equals("ROOT/"))
             {
@@ -79,7 +87,7 @@ internal sealed class TwoArgumentCommandStrategy : ICommandStrategy
                 return true;
             }
         }
-        else if (command.Equals("mv") && numberOfPaths == 2 && _context.InspectPath(path1, command, "2") && _context.InspectPath(path2, command, "2"))
+        else if (command.Equals("mv") && numberOfPaths == 2 && _twoPathValidator.IsValid(keys))
         {
             if (path1El.Length == 3 && path2.Equals("ROOT/"))
             {
