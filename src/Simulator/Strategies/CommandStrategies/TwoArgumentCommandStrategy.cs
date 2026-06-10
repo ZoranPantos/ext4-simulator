@@ -1,5 +1,6 @@
-using System;
+using Ext4FileSystemSimulation.Enums;
 using Ext4FileSystemSimulation.Strategies.ValidationStrategies;
+using System;
 
 namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
@@ -12,13 +13,17 @@ internal sealed class TwoArgumentCommandStrategy : ICommandStrategy
     private readonly IValidationStrategy _pathValidator;
     private readonly IValidationStrategy _twoPathValidator;
 
-    public TwoArgumentCommandStrategy(ITerminalContext context)
+    public TwoArgumentCommandStrategy(
+        ITerminalContext context,
+        PathValidationStrategy pathValidator,
+        TwoPathValidationStrategy twoPathValidator)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-
-        _pathValidator = new PathValidationStrategy(context, "2");
-        _twoPathValidator = new TwoPathValidationStrategy(context);
+        _pathValidator = pathValidator ?? throw new ArgumentNullException(nameof(pathValidator));
+        _twoPathValidator = twoPathValidator ?? throw new ArgumentNullException(nameof(twoPathValidator));
     }
+
+    public InputScenario Scenario => InputScenario.TwoArguments;
 
     public bool Handle(string input)
     {
@@ -60,8 +65,7 @@ internal sealed class TwoArgumentCommandStrategy : ICommandStrategy
 
         if (command.Equals("echo") && numberOfPaths == 1 && _pathValidator.IsValid(keys))
         {
-            //echo input u terminalu ne smije sadrzavati white space-s inace terminal nece raditi
-            _context.Storage.InsertDataToFile(keys[2], path1); //if input data contains "/", it wont be accepted. fix this
+            _context.Storage.InsertDataToFile(keys[2], path1);
             return true;
         }
         else if (command.Equals("rename") && numberOfPaths == 1 && _pathValidator.IsValid(keys))

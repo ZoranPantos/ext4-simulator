@@ -1,5 +1,6 @@
-using System;
+using Ext4FileSystemSimulation.Enums;
 using Ext4FileSystemSimulation.Strategies.ValidationStrategies;
+using System;
 
 namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
@@ -13,13 +14,17 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
     private readonly IValidationStrategy _pathValidator;
     private readonly IValidationStrategy _directoryCreationValidator;
 
-    public OneArgumentCommandStrategy(ITerminalContext context)
+    public OneArgumentCommandStrategy(
+        ITerminalContext context,
+        PathValidationStrategy pathValidator,
+        DirectoryCreationValidationStrategy directoryCreationValidator)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-
-        _pathValidator = new PathValidationStrategy(context, "2");
-        _directoryCreationValidator = new DirectoryCreationValidationStrategy(context);
+        _pathValidator = pathValidator ?? throw new ArgumentNullException(nameof(pathValidator));
+        _directoryCreationValidator = directoryCreationValidator ?? throw new ArgumentNullException(nameof(directoryCreationValidator));
     }
+
+    public InputScenario Scenario => InputScenario.OneArgument;
 
     public bool Handle(string input)
     {

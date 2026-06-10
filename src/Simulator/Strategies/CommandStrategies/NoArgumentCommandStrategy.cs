@@ -1,3 +1,4 @@
+using Ext4FileSystemSimulation.Enums;
 using System;
 
 namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
@@ -11,6 +12,8 @@ internal sealed class NoArgumentCommandStrategy : ICommandStrategy
 
     public NoArgumentCommandStrategy(ITerminalContext context) =>
         _context = context ?? throw new ArgumentNullException(nameof(context));
+
+    public InputScenario Scenario => InputScenario.NoArgument;
 
     public bool Handle(string input)
     {

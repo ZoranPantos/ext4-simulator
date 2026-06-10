@@ -1,3 +1,5 @@
+using Ext4FileSystemSimulation.Enums;
+
 namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
 /// <summary>
@@ -6,6 +8,11 @@ namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 /// </summary>
 internal interface ICommandStrategy
 {
+    /// <summary>
+    /// The input shape this strategy handles; used to build the dispatch map.
+    /// </summary>
+    InputScenario Scenario { get; }
+
     /// <summary>
     /// Processes the command line. Returns the same flag the original
     /// Operate* methods returned (drives the terminal's input loop).

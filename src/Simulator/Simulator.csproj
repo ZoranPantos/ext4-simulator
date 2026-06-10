@@ -6,4 +6,8 @@
     <RootNamespace>Ext4FileSystemSimulation</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+  </ItemGroup>
+
 </Project>
