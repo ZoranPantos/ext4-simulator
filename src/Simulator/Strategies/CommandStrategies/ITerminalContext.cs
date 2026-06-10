@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ext4FileSystemSimulation.CommandStrategies;
+namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
 /// <summary>
 /// The terminal services a command strategy needs: the backing storage, the

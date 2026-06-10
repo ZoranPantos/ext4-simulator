@@ -1,7 +1,7 @@
 using System;
 using Ext4FileSystemSimulation;
 
-Console.Title = "FS SIM Terminal Window";
+Console.Title = "ext4 simulator shell";
 
 if (OperatingSystem.IsWindows() && !Console.IsOutputRedirected)
 {

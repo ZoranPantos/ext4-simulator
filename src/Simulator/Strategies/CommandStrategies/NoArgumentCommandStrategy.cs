@@ -1,6 +1,6 @@
 using System;
 
-namespace Ext4FileSystemSimulation.CommandStrategies;
+namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
 /// <summary>
 /// Strategy for bare commands that take no arguments: help, clear, exit, dstat.
@@ -9,7 +9,8 @@ internal sealed class NoArgumentCommandStrategy : ICommandStrategy
 {
     private readonly ITerminalContext _context;
 
-    public NoArgumentCommandStrategy(ITerminalContext context) => _context = context;
+    public NoArgumentCommandStrategy(ITerminalContext context) =>
+        _context = context ?? throw new ArgumentNullException(nameof(context));
 
     public bool Handle(string input)
     {

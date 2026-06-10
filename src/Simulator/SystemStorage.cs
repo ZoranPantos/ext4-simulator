@@ -19,9 +19,11 @@ internal sealed class SystemStorage
         InstantiateObjects();
 
         disk.Position = (long)DiskStatLocations.FreeFileByteAddr;
+
         tracker.NextAvailableFileNodeByte = reader.ReadInt32();
         tracker.NextAvailableDirNodeByte = reader.ReadInt32();
         tracker.FirstAvailableFileDataByte = reader.ReadInt32();
+
         disk.Position = (int)DiskStatLocations.FileCount;
         tracker.FileNodeCount = reader.ReadInt32();
         disk.Position = (int)DiskStatLocations.DirCount;
@@ -58,7 +60,7 @@ internal sealed class SystemStorage
             tracker.DirNodeCount = 0;
         }
 
-        writer.Write(startup + 1); //Write methods uses sent type's needed allocation and not necessary 1b; example it will write this int into 4B = 32b
+        writer.Write(startup + 1);
         writer.Write(tracker.DiskCapacity);
         writer.Write(tracker.FileDataCapacity);
         writer.Write(tracker.FileNodesCapacity);
@@ -137,6 +139,7 @@ internal sealed class SystemStorage
     {
         //Updates total number of nodes in RAM and HDD
         // type: f for file, d for dir; sign: + for increment, - for decrement
+
         UpdatePosition(type);
         int count = reader.ReadInt32();
         UpdatePosition(type);
@@ -177,6 +180,7 @@ internal sealed class SystemStorage
     private int GetLastUsedID(char type)
     {
         // f: file i-node; d: dir i-node
+
         if (type.Equals('f'))
             disk.Position = (int)DiskStatLocations.LastUsedNodeFileID;
         else if (type.Equals('d'))
@@ -256,6 +260,7 @@ internal sealed class SystemStorage
     public DirectoryNode GetDirStats(int address = 0)
     {
         //reads ROOT stats if nothing is sent as an argument
+
         var node = new DirectoryNode();
 
         if (address == 0)
@@ -285,6 +290,7 @@ internal sealed class SystemStorage
     public void UpdateRootStats(char filecount, char dircount, int newDirNodeAddress, int newFileNodeAddress)
     {
         // filecount and dircount: + increment, - decrement, o neutral
+
         int startAddress = tracker.DirNodesStartAddress + (int)DirectoryNodeOffset.FileCount;
         int value;
         int arrayPosition;
@@ -372,7 +378,8 @@ internal sealed class SystemStorage
 
     private void UpdateNextFreeDirAddress(char sign)
     {
-        //Updates RAM and HDD memory
+        // Updates RAM and HDD memory
+
         disk.Position = (int)DiskStatLocations.FreeDirByteAddr;
 
         if (sign.Equals('+'))

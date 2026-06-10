@@ -1,4 +1,6 @@
-namespace Ext4FileSystemSimulation.CommandStrategies;
+using System;
+
+namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
 /// <summary>
 /// Strategy for commands that take two arguments: echo, rename, cp, mv.
@@ -7,12 +9,16 @@ internal sealed class TwoArgumentCommandStrategy : ICommandStrategy
 {
     private readonly ITerminalContext _context;
 
-    public TwoArgumentCommandStrategy(ITerminalContext context) => _context = context;
+    public TwoArgumentCommandStrategy(ITerminalContext context) =>
+        _context = context ?? throw new ArgumentNullException(nameof(context));
 
     public bool Handle(string input)
     {
-        string[] keys = input.Split(" "), path1El, path2El;
-        string path1 = "", path2 = "";
+        string[] keys = input.Split(" ");
+        string[] path1El;
+        string[] path2El;
+        string path1 = "";
+        string path2 = "";
         string command = keys[0];
         int numberOfPaths = 0;
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace Ext4FileSystemSimulation.CommandStrategies;
+namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
 /// <summary>
 /// Strategy for commands that take a single argument: mkdir, create, cat, stat,
@@ -10,14 +10,15 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
 {
     private readonly ITerminalContext _context;
 
-    public OneArgumentCommandStrategy(ITerminalContext context) => _context = context;
+    public OneArgumentCommandStrategy(ITerminalContext context)
+        => _context = context ?? throw new ArgumentNullException(nameof(context));
 
     public bool Handle(string input)
     {
-        string[] keys = input.Split(" "), pathElements;
+        string[] keys = input.Split(" ");
         string command = keys[0];
         string path = keys[1];
-        pathElements = keys[1].Split("/");
+        string[] pathElements = keys[1].Split("/");
 
         if (!_context.IsCommandValid(command))
         {
@@ -46,18 +47,18 @@ internal sealed class OneArgumentCommandStrategy : ICommandStrategy
                 Terminal.ErrorMessage("Directory with the same name already exists. Please enter another name");
                 return false;
             }
-            else
-            {
-                _context.Storage.AddDirNode(pathElements[1]);
-                _context.CreatedSubDirectories.Add(pathElements[1]);
-                return true;
-            }
+
+            _context.Storage.AddDirNode(pathElements[1]);
+            _context.CreatedSubDirectories.Add(pathElements[1]);
+
+            return true;
         }
         else if (command.Equals("cat") && _context.InspectPath(path, command, "2"))
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
             _context.Storage.DisplayFileContent(path);
             Console.ForegroundColor = ConsoleColor.White;
+
             return true;
         }
         else if (command.Equals("stat") && _context.InspectPath(path, command, "2"))

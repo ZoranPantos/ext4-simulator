@@ -1,4 +1,4 @@
-namespace Ext4FileSystemSimulation.CommandStrategies;
+namespace Ext4FileSystemSimulation.Strategies.CommandStrategies;
 
 /// <summary>
 /// Strategy for handling a single trimmed command line. The concrete strategy is

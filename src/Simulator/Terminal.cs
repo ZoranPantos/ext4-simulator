@@ -1,5 +1,5 @@
-using Ext4FileSystemSimulation.CommandStrategies;
 using Ext4FileSystemSimulation.Enums;
+using Ext4FileSystemSimulation.Strategies.CommandStrategies;
 using System;
 using System.Collections.Generic;
 
@@ -27,7 +27,7 @@ internal sealed class Terminal : ITerminalContext
         {
             [InputScenario.NoArgument] = new NoArgumentCommandStrategy(this),
             [InputScenario.OneArgument] = new OneArgumentCommandStrategy(this),
-            [InputScenario.TwoArgument] = new TwoArgumentCommandStrategy(this)
+            [InputScenario.TwoArguments] = new TwoArgumentCommandStrategy(this)
         };
     }
 
@@ -39,6 +39,7 @@ internal sealed class Terminal : ITerminalContext
         while (true)
         {
             flag = false;
+
             do
             {
                 Console.Write("command> ");
@@ -79,7 +80,7 @@ internal sealed class Terminal : ITerminalContext
         return whiteSpaceCount switch
         {
             1 => InputScenario.OneArgument,
-            2 => InputScenario.TwoArgument,
+            2 => InputScenario.TwoArguments,
             _ => InputScenario.TooManyArguments
         };
     }
