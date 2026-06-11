@@ -81,10 +81,8 @@ internal sealed class SystemStorage : ISystemStorage
         writer.Write(tracker.NextAvailableDirNodeByte);
         writer.Write(tracker.FirstAvailableFileDataByte);
 
-        for (int i = 0; i < 2; i++, writer.Write(0))
-        {
-            ;
-        }
+        writer.Write(0);
+        writer.Write(0);
 
         writer.Flush();
         disk.Position = 0;
@@ -125,7 +123,7 @@ internal sealed class SystemStorage : ISystemStorage
 
         for (int i = 0; i < 20; i++)
         {
-            if (i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13 || i == 14 || i == 15 || i == 16)
+            if (i is (>= 1 and <= 5) or (>= 11 and <= 16))
                 Console.WriteLine(messages[i] + reader.ReadInt32() + " B");
             else
                 Console.WriteLine(messages[i] + reader.ReadInt32());
@@ -806,10 +804,8 @@ internal sealed class SystemStorage : ISystemStorage
 
         int blockCount = 0;
 
-        for (int i = 0; i < FileNode.MaxBlockCount && matrix[0, i] != 0; i++, blockCount++)
-        {
-            ;
-        }
+        while (blockCount < FileNode.MaxBlockCount && matrix[0, blockCount] != 0)
+            blockCount++;
 
         int fileSize = 0;
 
