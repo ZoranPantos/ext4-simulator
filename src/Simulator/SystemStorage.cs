@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Ext4FileSystemSimulation;
 
-internal sealed class SystemStorage
+internal sealed class SystemStorage : ISystemStorage
 {
     private FileStream disk;
     private BinaryReader reader;
@@ -137,7 +137,7 @@ internal sealed class SystemStorage
 
     private void UpdateNodeCount(char type, char sign)
     {
-        //Updates total number of nodes in RAM and HDD
+        // Updates total number of nodes in RAM and HDD
         // type: f for file, d for dir; sign: + for increment, - for decrement
 
         UpdatePosition(type);

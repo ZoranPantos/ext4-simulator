@@ -12,7 +12,7 @@ namespace Ext4FileSystemSimulation;
 /// </summary>
 internal sealed class TerminalContext : ITerminalContext
 {
-    private readonly SystemStorage _systemStorage;
+    private readonly ISystemStorage _systemStorage;
 
     private readonly LinkedList<string> _availableCommands = new(
     [
@@ -22,10 +22,10 @@ internal sealed class TerminalContext : ITerminalContext
 
     private readonly LinkedList<string> _createdSubDirectories = [];
 
-    public TerminalContext(SystemStorage systemStorage)
+    public TerminalContext(ISystemStorage systemStorage)
         => _systemStorage = systemStorage ?? throw new ArgumentNullException(nameof(systemStorage));
 
-    public SystemStorage Storage => _systemStorage;
+    public ISystemStorage Storage => _systemStorage;
 
     public ICollection<string> CreatedSubDirectories => _createdSubDirectories;
 

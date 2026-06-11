@@ -22,7 +22,7 @@ try
 {
     var services = new ServiceCollection();
 
-    services.AddSingleton<SystemStorage>();
+    services.AddSingleton<ISystemStorage, SystemStorage>();
     services.AddSingleton<ITerminalContext, TerminalContext>();
 
     services.AddSingleton(provider => new PathValidationStrategy(provider.GetRequiredService<ITerminalContext>(), "2"));
